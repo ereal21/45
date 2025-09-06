@@ -1242,6 +1242,22 @@ async def buy_item_callback_handler(call: CallbackQuery):
         return
 
     lang = get_user_language(user_id) or 'en'
+    value_data = get_item_value(item_name)
+    if not value_data:
+        await bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=msg,
+            text='❌ Item out of stock',
+            reply_markup=back(f'item_{item_name}')
+        )
+        TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+        TgConfig.STATE.pop(f'{user_id}_price', None)
+        TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+        return
+    if not value_data['is_infinity']:
+        buy_item(value_data['id'], value_data['is_infinity'])
+    TgConfig.STATE[f'reserved_{user_id}'] = value_data
+
     TgConfig.STATE[f'{user_id}_deduct'] = user_balance
     TgConfig.STATE[user_id] = 'purchase_crypto'
     missing = item_price - user_balance
@@ -1295,6 +1311,50 @@ async def purchase_crypto_payment(call: CallbackQuery):
                 pass
         await bot.send_message(user_id, t(lang, 'payment_cancelled'))
 
+    pending = get_user_unfinished_operation(user_id)
+    if pending:
+        invoice_id, old_msg_id = pending
+        finish_operation(invoice_id)
+        purchase_data = TgConfig.STATE.pop(f'purchase_{invoice_id}', None)
+        if purchase_data and purchase_data.get('reserved'):
+            reserved = purchase_data['reserved']
+            if reserved and not reserved['is_infinity']:
+                was_empty = (
+                    select_item_values_amount(purchase_data['item']) == 0
+                    and not check_value(purchase_data['item'])
+                )
+                add_values_to_item(purchase_data['item'], reserved['value'], reserved['is_infinity'])
+                if was_empty:
+                    await notify_restock(bot, purchase_data['item'])
+        try:
+            await bot.delete_message(user_id, old_msg_id)
+        except Exception:
+            pass
+        reserve_msg_id = TgConfig.STATE.pop(f'{user_id}_reserve_msg', None)
+        if reserve_msg_id:
+            try:
+                await bot.delete_message(user_id, reserve_msg_id)
+            except Exception:
+                pass
+        await bot.send_message(user_id, t(lang, 'payment_cancelled'))
+
+    value_data = get_item_value(item_name)
+    if not value_data:
+        await bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text='❌ Item out of stock',
+            reply_markup=back(f'item_{item_name}')
+        )
+        TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+        TgConfig.STATE.pop(f'{user_id}_price', None)
+        TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+        TgConfig.STATE.pop(f'{user_id}_deduct', None)
+        return
+    if not value_data['is_infinity']:
+        buy_item(value_data['id'], value_data['is_infinity'])
+    reserved = value_data
+
     value_data = get_item_value(item_name)
     if not value_data:
         await bot.edit_message_text(
@@ -1338,6 +1398,9 @@ async def purchase_crypto_payment(call: CallbackQuery):
         parse_mode='HTML',
         reply_markup=markup,
     )
+    reserve_msg = await bot.send_message(user_id, t(lang, 'item_reserved'))
+    TgConfig.STATE[f'{user_id}_reserve_msg'] = reserve_msg.message_id
+
 
     start_operation(user_id, amount, payment_id, sent.message_id)
     if not value_data['is_infinity']:
