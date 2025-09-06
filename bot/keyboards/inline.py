@@ -258,12 +258,15 @@ def console(role: int) -> InlineKeyboardMarkup:
     inline_keyboard.append([InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')])
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-def confirm_purchase_menu(item_name: str, lang: str) -> InlineKeyboardMarkup:
+def confirm_purchase_menu(item_name: str, lang: str, show_promo: bool = True) -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton(t(lang, 'purchase_button'), callback_data=f'buy_{item_name}')],
-        [InlineKeyboardButton(t(lang, 'apply_promo'), callback_data=f'applypromo_{item_name}')],
-        [InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')]
+        [InlineKeyboardButton(t(lang, 'purchase_button'), callback_data=f'buy_{item_name}')]
     ]
+    if show_promo:
+        inline_keyboard.append(
+            [InlineKeyboardButton(t(lang, 'apply_promo'), callback_data=f'applypromo_{item_name}')]
+        )
+    inline_keyboard.append([InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')])
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
@@ -616,33 +619,6 @@ def crypto_choice() -> InlineKeyboardMarkup:
         [InlineKeyboardButton('🔙 Go back', callback_data='replenish_balance')]
     ]
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-def crypto_choice_purchase(item_name: str, lang: str) -> InlineKeyboardMarkup:
-    """Return crypto choice markup for product purchase."""
-    inline_keyboard = [
-        [InlineKeyboardButton('SOL', callback_data='buycrypto_SOL'),
-         InlineKeyboardButton('BTC', callback_data='buycrypto_BTC')],
-        [InlineKeyboardButton('TRX', callback_data='buycrypto_TRX'),
-         InlineKeyboardButton('TON', callback_data='buycrypto_TON')],
-        [InlineKeyboardButton('USDT (TRC20)', callback_data='buycrypto_USDTTRC20'),
-         InlineKeyboardButton('ETH', callback_data='buycrypto_ETH')],
-        [InlineKeyboardButton('LTC', callback_data='buycrypto_LTC')],
-        [InlineKeyboardButton(t(lang, 'back'), callback_data=f'item_{item_name}')],
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-
-
-
-
-def use_balance_menu(item_name: str, lang: str) -> InlineKeyboardMarkup:
-    """Ask whether to use current balance for purchase."""
-    inline_keyboard = [
-        [
-            InlineKeyboardButton(t(lang, 'yes'), callback_data='use_balance_yes'),
-            InlineKeyboardButton(t(lang, 'no'), callback_data='use_balance_no'),
-        ],
-        [InlineKeyboardButton(t(lang, 'back'), callback_data=f'item_{item_name}')],
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
 def crypto_choice_purchase(item_name: str, lang: str) -> InlineKeyboardMarkup:
@@ -655,7 +631,7 @@ def crypto_choice_purchase(item_name: str, lang: str) -> InlineKeyboardMarkup:
         [InlineKeyboardButton('USDT (TRC20)', callback_data='buycrypto_USDTTRC20'),
          InlineKeyboardButton('ETH', callback_data='buycrypto_ETH')],
         [InlineKeyboardButton('LTC', callback_data='buycrypto_LTC')],
-        [InlineKeyboardButton(t(lang, 'back'), callback_data=f'item_{item_name}')],
+        [InlineKeyboardButton(t(lang, 'cancel'), callback_data='cancel_purchase')],
     ]
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 

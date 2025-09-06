@@ -197,7 +197,8 @@ def has_user_achievement(user_id: int, code: str) -> bool:
 
 
 def get_achievement_users(code: str) -> int:
-    return Database().session.query(func.count()).filter(
+    session = Database().session
+    return session.query(func.count(UserAchievement.user_id)).filter(
         UserAchievement.achievement_code == code
     ).scalar()
 
@@ -384,6 +385,20 @@ def get_unfinished_operation(operation_id: str) -> tuple[int, int, int | None] |
         .first()
     )
     return (result.user_id, result.operation_value, result.message_id) if result else None
+
+
+def get_user_unfinished_operation(user_id: int) -> tuple[str, int | None] | None:
+    """Return (operation_id, message_id) for a user's unfinished operation."""
+    result = (
+        Database()
+        .session.query(
+            UnfinishedOperations.operation_id,
+            UnfinishedOperations.message_id,
+        )
+        .filter(UnfinishedOperations.user_id == user_id)
+        .first()
+    )
+    return (result.operation_id, result.message_id) if result else None
 
 
 def check_user_referrals(user_id: int) -> list[int]:
