@@ -28,6 +28,7 @@ from bot.database.methods import (
     get_category_parent,
     get_item_info,
     get_user_count,
+    get_user_language,
     select_admins,
     select_all_operations,
     select_all_orders,
@@ -1447,7 +1448,8 @@ def register_shop_management(dp: Dispatcher) -> None:
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'assign_photo_wait_media',
                                 content_types=['photo', 'video'])
     dp.register_message_handler(assign_photo_receive_desc,
-                                lambda c: TgConfig.STATE.get(c.from_user.id) == 'assign_photo_wait_desc')
+                                lambda c: TgConfig.STATE.get(c.from_user.id) == 'assign_photo_wait_desc',
+                                content_types=['text'])
     dp.register_message_handler(check_item_name_for_update,
                                 lambda c: TgConfig.STATE.get(c.from_user.id) == 'check_item_name')
     dp.register_message_handler(update_item_name,
