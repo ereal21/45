@@ -258,12 +258,15 @@ def console(role: int) -> InlineKeyboardMarkup:
     inline_keyboard.append([InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')])
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
-def confirm_purchase_menu(item_name: str, lang: str) -> InlineKeyboardMarkup:
+def confirm_purchase_menu(item_name: str, lang: str, show_promo: bool = True) -> InlineKeyboardMarkup:
     inline_keyboard = [
-        [InlineKeyboardButton(t(lang, 'purchase_button'), callback_data=f'buy_{item_name}')],
-        [InlineKeyboardButton(t(lang, 'apply_promo'), callback_data=f'applypromo_{item_name}')],
-        [InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')]
+        [InlineKeyboardButton(t(lang, 'purchase_button'), callback_data=f'buy_{item_name}')]
     ]
+    if show_promo:
+        inline_keyboard.append(
+            [InlineKeyboardButton(t(lang, 'apply_promo'), callback_data=f'applypromo_{item_name}')]
+        )
+    inline_keyboard.append([InlineKeyboardButton('🔙 Grįžti į meniu', callback_data='back_to_menu')])
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
