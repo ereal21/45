@@ -23,7 +23,7 @@ from bot.database.methods import (
     select_user_operations, select_user_items, start_operation,
     select_unfinished_operations, get_user_referral, finish_operation, update_balance, create_operation,
     bought_items_list, check_value, get_subcategories, get_category_parent, get_user_language, update_user_language,
-    get_unfinished_operation, get_promocode, add_values_to_item, get_user_tickets, update_lottery_tickets,
+    get_unfinished_operation, get_user_unfinished_operation, get_promocode, add_values_to_item, get_user_tickets, update_lottery_tickets,
     has_user_achievement, get_achievement_users, grant_achievement, get_user_count,
     get_out_of_stock_categories, get_out_of_stock_subcategories, get_out_of_stock_items,
     has_stock_notification, add_stock_notification, check_user_by_username, check_user_referrals,
@@ -1257,6 +1257,7 @@ async def buy_item_callback_handler(call: CallbackQuery):
     if not value_data['is_infinity']:
         buy_item(value_data['id'], value_data['is_infinity'])
     TgConfig.STATE[f'reserved_{user_id}'] = value_data
+
     TgConfig.STATE[f'{user_id}_deduct'] = user_balance
     TgConfig.STATE[user_id] = 'purchase_crypto'
     missing = item_price - user_balance
@@ -1281,6 +1282,34 @@ async def purchase_crypto_payment(call: CallbackQuery):
     deduct = TgConfig.STATE.get(f'{user_id}_deduct', 0)
     gift_to = TgConfig.STATE.pop(f'{user_id}_gift_to', None)
     gift_name = TgConfig.STATE.pop(f'{user_id}_gift_name', None)
+    lang = get_user_language(user_id) or 'en'
+
+    pending = get_user_unfinished_operation(user_id)
+    if pending:
+        invoice_id, old_msg_id = pending
+        finish_operation(invoice_id)
+        purchase_data = TgConfig.STATE.pop(f'purchase_{invoice_id}', None)
+        if purchase_data and purchase_data.get('reserved'):
+            reserved = purchase_data['reserved']
+            if reserved and not reserved['is_infinity']:
+                was_empty = (
+                    select_item_values_amount(purchase_data['item']) == 0
+                    and not check_value(purchase_data['item'])
+                )
+                add_values_to_item(purchase_data['item'], reserved['value'], reserved['is_infinity'])
+                if was_empty:
+                    await notify_restock(bot, purchase_data['item'])
+        try:
+            await bot.delete_message(user_id, old_msg_id)
+        except Exception:
+            pass
+        reserve_msg_id = TgConfig.STATE.pop(f'{user_id}_reserve_msg', None)
+        if reserve_msg_id:
+            try:
+                await bot.delete_message(user_id, reserve_msg_id)
+            except Exception:
+                pass
+        await bot.send_message(user_id, t(lang, 'payment_cancelled'))
 
     value_data = get_item_value(item_name)
     if not value_data:
@@ -1303,7 +1332,6 @@ async def purchase_crypto_payment(call: CallbackQuery):
     payment_id, address, pay_amount = create_payment(float(amount), currency)
 
     sleep_time = int(TgConfig.PAYMENT_TIME)
-    lang = get_user_language(user_id) or 'en'
     expires_at = (
         datetime.datetime.now() + datetime.timedelta(seconds=sleep_time)
     ).strftime('%H:%M')

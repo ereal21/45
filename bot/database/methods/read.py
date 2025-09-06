@@ -387,6 +387,20 @@ def get_unfinished_operation(operation_id: str) -> tuple[int, int, int | None] |
     return (result.user_id, result.operation_value, result.message_id) if result else None
 
 
+def get_user_unfinished_operation(user_id: int) -> tuple[str, int | None] | None:
+    """Return (operation_id, message_id) for a user's unfinished operation."""
+    result = (
+        Database()
+        .session.query(
+            UnfinishedOperations.operation_id,
+            UnfinishedOperations.message_id,
+        )
+        .filter(UnfinishedOperations.user_id == user_id)
+        .first()
+    )
+    return (result.operation_id, result.message_id) if result else None
+
+
 def check_user_referrals(user_id: int) -> list[int]:
     return Database().session.query(User).filter(User.referral_id == user_id).count()
 
