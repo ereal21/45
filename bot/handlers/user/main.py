@@ -1242,6 +1242,22 @@ async def buy_item_callback_handler(call: CallbackQuery):
         return
 
     lang = get_user_language(user_id) or 'en'
+    value_data = get_item_value(item_name)
+    if not value_data:
+        await bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=msg,
+            text='❌ Item out of stock',
+            reply_markup=back(f'item_{item_name}')
+        )
+        TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+        TgConfig.STATE.pop(f'{user_id}_price', None)
+        TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+        return
+    if not value_data['is_infinity']:
+        buy_item(value_data['id'], value_data['is_infinity'])
+    TgConfig.STATE[f'reserved_{user_id}'] = value_data
+
     TgConfig.STATE[f'{user_id}_deduct'] = user_balance
     TgConfig.STATE[user_id] = 'purchase_crypto'
     missing = item_price - user_balance
