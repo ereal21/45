@@ -53,7 +53,7 @@ from bot.utils.files import cleanup_item_file
 def build_menu_text(user_obj, balance: float, purchases: int, streak: int, lang: str) -> str:
     """Return main menu text with loyalty status and streak."""
     mention = f"<a href='tg://user?id={user_obj.id}'>{html.escape(user_obj.full_name)}</a>"
-    level_name, _ = get_level_info(purchases, lang)
+    level_name, _, _ = get_level_info(purchases, lang)
     status = f"👤 Status: {level_name}"
     streak_line = t(lang, 'streak', days=streak)
     return (
@@ -930,7 +930,7 @@ async def item_info_callback_handler(call: CallbackQuery):
     category = item_info_list['category_name']
     lang = get_user_language(user_id) or 'en'
     purchases = select_user_items(user_id)
-    _, discount = get_level_info(purchases, lang)
+    _, discount, _ = get_level_info(purchases, lang)
     price = round(item_info_list["price"] * (100 - discount) / 100, 2)
     markup = item_info(item_name, category, lang)
     await bot.edit_message_text(
@@ -996,7 +996,7 @@ async def confirm_buy_callback_handler(call: CallbackQuery):
         return
     lang = get_user_language(user_id) or 'en'
     purchases = select_user_items(user_id)
-    _, discount = get_level_info(purchases, lang)
+    _, discount, _ = get_level_info(purchases, lang)
     user = check_user(user_id)
     price = round(info['price'] * (100 - discount) / 100, 2)
     if user and user.streak_discount:
@@ -1086,9 +1086,6 @@ async def buy_item_callback_handler(call: CallbackQuery):
             else:
                 add_bought_item(value_data['item_name'], value_data['value'], item_price, user_id, formatted_time)
             purchases = purchases_before + 1
-            level_before, _ = get_level_info(purchases_before, lang)
-            level_after, discount = get_level_info(purchases, lang)
-
             level_before, _, _ = get_level_info(purchases_before, lang)
             level_after, discount, _ = get_level_info(purchases, lang)
             if level_after != level_before:
