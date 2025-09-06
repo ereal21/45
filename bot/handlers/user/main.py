@@ -1277,49 +1277,6 @@ async def buy_item_callback_handler(call: CallbackQuery):
 
 
 
-    if user_balance > 0:
-        TgConfig.STATE[user_id] = 'use_balance'
-        await bot.edit_message_text(
-            t(lang, 'use_balance_prompt', balance=f'{user_balance:.2f}'),
-            chat_id=call.message.chat.id,
-            message_id=msg,
-            reply_markup=use_balance_menu(item_name, lang),
-        )
-    else:
-        TgConfig.STATE[f'{user_id}_deduct'] = 0
-        TgConfig.STATE[user_id] = 'purchase_crypto'
-        await bot.edit_message_text(
-            t(lang, 'choose_crypto'),
-            chat_id=call.message.chat.id,
-            message_id=msg,
-            reply_markup=crypto_choice_purchase(item_name, lang),
-        )
-
-
-async def use_balance_handler(call: CallbackQuery):
-    """Handle user's decision to use balance before paying invoice."""
-    bot, user_id = await get_bot_user_ids(call)
-    item_name = TgConfig.STATE.get(f'{user_id}_pending_item')
-    price = TgConfig.STATE.get(f'{user_id}_price')
-    lang = get_user_language(user_id) or 'en'
-    balance = get_user_balance(user_id)
-
-    if call.data == 'use_balance_yes':
-        TgConfig.STATE[f'{user_id}_deduct'] = balance
-        amount = price - balance
-    else:
-        TgConfig.STATE[f'{user_id}_deduct'] = 0
-        amount = price
-    TgConfig.STATE[user_id] = 'purchase_crypto'
-    await bot.edit_message_text(
-        t(lang, 'choose_crypto'),
-        chat_id=call.message.chat.id,
-        message_id=call.message.message_id,
-        reply_markup=crypto_choice_purchase(item_name, lang),
-    )
-
-
-
 async def purchase_crypto_payment(call: CallbackQuery):
     """Create crypto invoice for purchasing an item."""
     bot, user_id = await get_bot_user_ids(call)
@@ -2252,9 +2209,6 @@ def register_user_handlers(dp: Dispatcher):
                                        lambda c: c.data.startswith('crypto_'), state='*')
 
 
-
-    dp.register_callback_query_handler(use_balance_handler,
-                                       lambda c: c.data in ('use_balance_yes', 'use_balance_no'), state='*')
 
     dp.register_callback_query_handler(purchase_crypto_payment,
                                        lambda c: c.data.startswith('buycrypto_'), state='*')
