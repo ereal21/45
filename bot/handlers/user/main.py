@@ -1266,8 +1266,6 @@ async def buy_item_callback_handler(call: CallbackQuery):
         message_id=msg,
         reply_markup=crypto_choice_purchase(item_name, lang),
     )
-    reserve_msg = await bot.send_message(user_id, t(lang, 'item_reserved'))
-    TgConfig.STATE[f'{user_id}_reserve_msg'] = reserve_msg.message_id
     if gift_to:
         TgConfig.STATE[f'{user_id}_gift_to'] = gift_to
         TgConfig.STATE[f'{user_id}_gift_name'] = gift_name
@@ -1281,17 +1279,25 @@ async def purchase_crypto_payment(call: CallbackQuery):
     item_name = TgConfig.STATE.get(f'{user_id}_pending_item')
     price = TgConfig.STATE.get(f'{user_id}_price')
     deduct = TgConfig.STATE.get(f'{user_id}_deduct', 0)
-    reserved = TgConfig.STATE.pop(f'reserved_{user_id}', None)
-    gift_to = TgConfig.STATE.pop(f'{user_id}_gift_to', None)
-    gift_name = TgConfig.STATE.pop(f'{user_id}_gift_name', None)
-    reserved = TgConfig.STATE.pop(f'reserved_{user_id}', None)
     gift_to = TgConfig.STATE.pop(f'{user_id}_gift_to', None)
     gift_name = TgConfig.STATE.pop(f'{user_id}_gift_name', None)
 
-    reserved = TgConfig.STATE.pop(f'reserved_{user_id}', None)
-    gift_to = TgConfig.STATE.pop(f'{user_id}_gift_to', None)
-    gift_name = TgConfig.STATE.pop(f'{user_id}_gift_name', None)
-
+    value_data = get_item_value(item_name)
+    if not value_data:
+        await bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text='❌ Item out of stock',
+            reply_markup=back(f'item_{item_name}')
+        )
+        TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+        TgConfig.STATE.pop(f'{user_id}_price', None)
+        TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+        TgConfig.STATE.pop(f'{user_id}_deduct', None)
+        return
+    if not value_data['is_infinity']:
+        buy_item(value_data['id'], value_data['is_infinity'])
+    reserved = value_data
 
     amount = price - deduct
     payment_id, address, pay_amount = create_payment(float(amount), currency)
@@ -1324,6 +1330,9 @@ async def purchase_crypto_payment(call: CallbackQuery):
         parse_mode='HTML',
         reply_markup=markup,
     )
+    reserve_msg = await bot.send_message(user_id, t(lang, 'item_reserved'))
+    TgConfig.STATE[f'{user_id}_reserve_msg'] = reserve_msg.message_id
+
     start_operation(user_id, amount, payment_id, sent.message_id)
     TgConfig.STATE[f'purchase_{payment_id}'] = {
         'item': item_name,
@@ -1335,10 +1344,11 @@ async def purchase_crypto_payment(call: CallbackQuery):
         'gift_name': gift_name,
     }
     TgConfig.STATE[user_id] = None
+
     await asyncio.sleep(sleep_time)
     info = get_unfinished_operation(payment_id)
     if info:
-        _, _, _ = info
+        user_id_db, _, message_id = info
         status = await check_payment(payment_id)
         if status not in ('finished', 'confirmed', 'sending'):
             finish_operation(payment_id)
@@ -1353,12 +1363,42 @@ async def purchase_crypto_payment(call: CallbackQuery):
                     add_values_to_item(purchase_data['item'], reserved['value'], reserved['is_infinity'])
                     if was_empty:
                         await notify_restock(bot, purchase_data['item'])
+            TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+            TgConfig.STATE.pop(f'{user_id}_price', None)
+            TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+            TgConfig.STATE.pop(f'{user_id}_deduct', None)
+            reserve_msg_id = TgConfig.STATE.pop(f'{user_id}_reserve_msg', None)
+            try:
+                await bot.delete_message(user_id_db, message_id)
+            except Exception:
+                pass
+            if reserve_msg_id:
+                try:
+                    await bot.delete_message(user_id_db, reserve_msg_id)
+                except Exception:
+                    pass
             await bot.send_message(user_id, t(lang, 'invoice_cancelled'), reply_markup=home_markup(lang))
+ 
 
-
-
-            await bot.send_message(user_id, t(lang, 'invoice_cancelled'))
-
+async def cancel_purchase(call: CallbackQuery):
+    """Cancel purchase before choosing a payment method."""
+    bot, user_id = await get_bot_user_ids(call)
+    lang = get_user_language(user_id) or 'en'
+    TgConfig.STATE.pop(f'{user_id}_pending_item', None)
+    TgConfig.STATE.pop(f'{user_id}_price', None)
+    TgConfig.STATE.pop(f'{user_id}_promo_applied', None)
+    TgConfig.STATE.pop(f'{user_id}_deduct', None)
+    TgConfig.STATE.pop(f'{user_id}_gift_to', None)
+    TgConfig.STATE.pop(f'{user_id}_gift_name', None)
+    TgConfig.STATE[user_id] = None
+    await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+    reserve_msg_id = TgConfig.STATE.pop(f'{user_id}_reserve_msg', None)
+    if reserve_msg_id:
+        try:
+            await bot.delete_message(user_id, reserve_msg_id)
+        except Exception:
+            pass
+    await bot.send_message(user_id, t(lang, 'payment_cancelled'), reply_markup=home_markup(lang))
 
 
 # Home button callback handler
@@ -1741,6 +1781,12 @@ async def checking_payment(call: CallbackQuery):
                 reserved = purchase_data.get('reserved')
                 gift_to = purchase_data.get('gift_to')
                 gift_name = purchase_data.get('gift_name')
+                reserve_msg_id = TgConfig.STATE.pop(f'{user_id}_reserve_msg', None)
+                if reserve_msg_id:
+                    try:
+                        await bot.delete_message(user_id, reserve_msg_id)
+                    except Exception:
+                        pass
 
                 if referral_id and TgConfig.REFERRAL_PERCENT != 0:
                     referral_percent = TgConfig.REFERRAL_PERCENT
@@ -2204,9 +2250,8 @@ def register_user_handlers(dp: Dispatcher):
                                        lambda c: c.data == 'pay_yoomoney', state='*')
     dp.register_callback_query_handler(crypto_payment,
                                        lambda c: c.data.startswith('crypto_'), state='*')
-
-
-
+    dp.register_callback_query_handler(cancel_purchase,
+                                       lambda c: c.data == 'cancel_purchase', state='*')
     dp.register_callback_query_handler(purchase_crypto_payment,
                                        lambda c: c.data.startswith('buycrypto_'), state='*')
     dp.register_callback_query_handler(cancel_payment,

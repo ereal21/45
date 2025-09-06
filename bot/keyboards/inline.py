@@ -631,7 +631,7 @@ def crypto_choice_purchase(item_name: str, lang: str) -> InlineKeyboardMarkup:
         [InlineKeyboardButton('USDT (TRC20)', callback_data='buycrypto_USDTTRC20'),
          InlineKeyboardButton('ETH', callback_data='buycrypto_ETH')],
         [InlineKeyboardButton('LTC', callback_data='buycrypto_LTC')],
-        [InlineKeyboardButton(t(lang, 'back'), callback_data=f'item_{item_name}')],
+        [InlineKeyboardButton(t(lang, 'cancel'), callback_data='cancel_purchase')],
     ]
     return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 

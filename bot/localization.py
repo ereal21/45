@@ -40,7 +40,7 @@ LANGUAGES = {
             '<b>Amount:</b> <code>{amount}</code> {currency}\n'
             '🏦 <b>Payment Address:</b>\n<code>{address}</code>\n\n'
             '⏳ <b>Expires At:</b> {expires_at} LT\n'
-            '⚠️ <b>Payment must be completed within 30 minutes of invoice creation.</b>\n\n'
+            '⚠️ <b>Payment must be completed within 15 minutes of invoice creation.</b>\n\n'
             '❗️ <b>Important:</b> Send <u>exactly</u> this amount of {currency}.\n\n'
             '✅ <b>Confirmation is automatic via webhook after network confirmation.</b>'
         ),
@@ -83,7 +83,7 @@ LANGUAGES = {
         'use_balance_prompt': 'You have {balance}€. Use it to reduce the price?',
         'choose_crypto': 'Choose payment method:',
         'need_top_up': 'You need to top up {missing}€ to complete the purchase. Choose payment method:',
-        'item_reserved': '🔒 Item reserved for you for 10 minutes.',
+        'item_reserved': '🔒 Item reserved for you for 15 minutes.',
         'payment_cancelled': '✅ Payment cancelled. Reserved items have been released.',
         'top_up_completed': '✅ Top-up completed.',
         'lottery_ticket_awarded': '🎟️ You received a lottery ticket.',
@@ -194,7 +194,7 @@ LANGUAGES = {
             '<b>Сумма:</b> <code>{amount}</code> {currency}\n'
             '🏦 <b>Адрес оплаты:</b>\n<code>{address}</code>\n\n'
             '⏳ <b>Действителен до:</b> {expires_at} LT\n'
-            '⚠️ <b>Оплата должна быть выполнена в течение 30 минут после создания.</b>\n\n'
+            '⚠️ <b>Оплата должна быть выполнена в течение 15 минут после создания.</b>\n\n'
             '❗️ <b>Важно:</b> Отправьте <u>ровно</u> это количество {currency}.\n\n'
             '✅ <b>Подтверждение произойдет автоматически через вебхук после подтверждения сети.</b>'
         ),
@@ -237,7 +237,7 @@ LANGUAGES = {
         'use_balance_prompt': 'У вас {balance}€. Использовать их для снижения цены?',
         'choose_crypto': 'Выберите способ оплаты:',
         'need_top_up': 'Вам нужно пополнить {missing}€ для покупки. Выберите способ оплаты:',
-        'item_reserved': '🔒 Товар зарезервирован для вас на 10 минут.',
+        'item_reserved': '🔒 Товар зарезервирован для вас на 15 минут.',
         'payment_cancelled': '✅ Платёж отменён. Резерв снят.',
         'top_up_completed': '✅ Пополнение завершено.',
         'lottery_ticket_awarded': '🎟️ Вы получили лотерейный билет.',
@@ -345,7 +345,7 @@ LANGUAGES = {
             '<b>Suma:</b> <code>{amount}</code> {currency}\n'
             '🏦 <b>Mokėjimo adresas:</b>\n<code>{address}</code>\n\n'
             '⏳ <b>Galioja iki:</b> {expires_at} LT\n'
-            '⚠️ <b>Mokėjimą reikia atlikti per 30 minučių nuo sąskaitos sukūrimo.</b>\n\n'
+            '⚠️ <b>Mokėjimą reikia atlikti per 15 minučių nuo sąskaitos sukūrimo.</b>\n\n'
             '❗️ <b>Svarbu:</b> Nusiųskite <u>tiksliai</u> tiek {currency} į šį adresą.\n\n'
             '✅ <b>Patvirtinimas vyks automatiškai per webhook po tinklo patvirtinimo.</b>'
         ),
@@ -388,7 +388,7 @@ LANGUAGES = {
         'use_balance_prompt': 'Turite {balance}€. Panaudoti juos kainai sumažinti?',
         'choose_crypto': 'Pasirinkite mokėjimo būdą:',
         'need_top_up': 'Turite papildyti {missing}€ šiam pirkiniui. Pasirinkite mokėjimo būdą:',
-        'item_reserved': '🔒 Prekė rezervuota jums 10 minučių.',
+        'item_reserved': '🔒 Prekė rezervuota jums 15 minučių.',
         'payment_cancelled': '✅ Mokėjimas atšauktas. Rezervuotos prekės atlaisvintos.',
         'top_up_completed': '✅ Papildymas baigtas.',
         'lottery_ticket_awarded': '🎟️ Gavote loterijos bilietą.',
