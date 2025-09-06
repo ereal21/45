@@ -197,7 +197,8 @@ def has_user_achievement(user_id: int, code: str) -> bool:
 
 
 def get_achievement_users(code: str) -> int:
-    return Database().session.query(func.count()).filter(
+    session = Database().session
+    return session.query(func.count(UserAchievement.user_id)).filter(
         UserAchievement.achievement_code == code
     ).scalar()
 
