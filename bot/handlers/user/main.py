@@ -684,6 +684,7 @@ async def coinflip_receive_bet(message: Message):
                 await bot.send_animation(user_id, f)
         except Exception:
             pass
+        await asyncio.sleep(4)
         win = result == side
         stats = TgConfig.COINFLIP_STATS.setdefault(user_id, {'games':0,'wins':0,'losses':0,'profit':0})
         stats['games'] += 1
@@ -842,6 +843,7 @@ async def coinflip_join_handler(call: CallbackQuery):
         await bot.send_animation(user_id, InputFile(gif_path))
     except Exception:
         pass
+    await asyncio.sleep(4)
     if result == creator_side:
         winner_id, loser_id = creator_id, user_id
     else:
